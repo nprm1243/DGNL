@@ -26,17 +26,27 @@ PASSW = os.getenv('PASSW')
 
 # print("Choose folder:")
 # path = askdirectory()
-path = 'D:/code/.contest/dgnl/thithulan1'
+path = 'D:/code/.contest/dgnl/testscan'
 files = os.listdir(path)
-dapan = f"{path}/_dapan.jpg"
+# dapan = f"{path}/_dapan.png"
 
-dapan_infors = get_informations(dapan)
+# dapan_infors = get_informations(dapan)
 bailam = []
+thresh = []
 for file in files:
     if ('_dapan' not in file):
-        bailam.append(get_informations(f'{path}/{file}'))
+        id, quesid, answer, th = get_informations(f'{path}/{file}', require_thresh=True)
+        bailam.append((id, quesid, answer))
+        thresh.append(th)
 
-dapan_vector = dapan_infors[2]
+file = open("answers.txt")
+data = file.read()
+file.close()
+data = data.split('\n')
+
+dapan_vector = []
+for line in data:
+    dapan_vector.append(line.split(' ')[-1])
 bailam_matrix = []
 for _ in bailam:
     bailam_matrix.append(_[2])
@@ -45,20 +55,20 @@ bailam_matrix = np.array(bailam_matrix)
 
 # JUST FOR TESTING
 
-file = open("answers.csv", "r", encoding='utf8')
-data = file.read()
-file.close()
-bailam = []
-bailam_matrix = []
-for i in data.split('\n')[2:]:
-    hehe = tuple(i[i.find('.com,')+5:i.find(' /')].split(','))
-    content = i[i.find('1200,')+5:i.find(',,')].split(',')
-    bailam_matrix.append(i[i.find('1200,')+5:i.find(',,')].split(','))
-    bailam.append((hehe[0], hehe[1], content))
-bailam_matrix = np.array(bailam_matrix)
-dapan_vector = np.array([bailam_matrix[0, :]])
-bailam = bailam[1:]
-bailam_matrix = bailam_matrix[1:, :]
+# file = open("answers.csv", "r", encoding='utf8')
+# data = file.read()
+# file.close()
+# bailam = []
+# bailam_matrix = []
+# for i in data.split('\n')[2:]:
+#     hehe = tuple(i[i.find('.com,')+5:i.find(' /')].split(','))
+#     content = i[i.find('1200,')+5:i.find(',,')].split(',')
+#     bailam_matrix.append(i[i.find('1200,')+5:i.find(',,')].split(','))
+#     bailam.append((hehe[0], hehe[1], content))
+# bailam_matrix = np.array(bailam_matrix)
+# dapan_vector = np.array([bailam_matrix[0, :]])
+# bailam = bailam[1:]
+# bailam_matrix = bailam_matrix[1:, :]
 
 # END JUST FOR TESTING
 
@@ -82,20 +92,42 @@ def irt(p):
     return list(map(lambda x : x * (3 / mx) + 10, weights))
 
 p_ = cal_p(dapan_vector, bailam_matrix)
-van_p = p_[:40]
-toan_p = p_[40:70]
-kh_p = p_[70:]
+
+## NORMAL
+# van_p = p_[:40]
+# toan_p = p_[40:70]
+# kh_p = p_[70:]
+# van_irt = irt(van_p)
+# toan_irt = irt(toan_p)
+# kh_irt = irt(kh_p)
+# irt_ = van_irt + toan_irt + kh_irt
+
+# # final_point = (bailam_matrix == dapan_vector)@np.array(irt_)
+# van_points = (bailam_matrix[:, :40] == dapan_vector[:, :40])@np.array(van_irt)
+# toan_points = (bailam_matrix[:, 40:70] == dapan_vector[:, 40:70])@np.array(toan_irt)
+# kh_points = (bailam_matrix[:, 70:] == dapan_vector[:, 70:])@np.array(kh_irt)
+
+# socaudung = sum((bailam_matrix == dapan_vector).T)
+
+## END NORMAL
+## SPECIAL
+
+van_p = p_[:30]
+toan_p = p_[30:60]
+kh_p = p_[60:]
 van_irt = irt(van_p)
 toan_irt = irt(toan_p)
 kh_irt = irt(kh_p)
 irt_ = van_irt + toan_irt + kh_irt
 
 # final_point = (bailam_matrix == dapan_vector)@np.array(irt_)
-van_points = (bailam_matrix[:, :40] == dapan_vector[:, :40])@np.array(van_irt)
-toan_points = (bailam_matrix[:, 40:70] == dapan_vector[:, 40:70])@np.array(toan_irt)
-kh_points = (bailam_matrix[:, 70:] == dapan_vector[:, 70:])@np.array(kh_irt)
+van_points = (bailam_matrix[:, :30] == dapan_vector[:, :30])@np.array(van_irt)
+toan_points = (bailam_matrix[:, 30:60] == dapan_vector[:, 30:60])@np.array(toan_irt)
+kh_points = (bailam_matrix[:, 60:] == dapan_vector[:, 60:])@np.zeros(60)
 
-socaudung = sum((bailam_matrix == dapan_vector).T)
+socaudung = sum((bailam_matrix[:,:60] == dapan_vector[:, :60]).T)
+
+## END SPECIAL
 
 for i in range(len(van_points)):
     bailam[i] += (np.round(van_points[i], 2), np.round(toan_points[i], 2), np.round(kh_points[i], 2))
@@ -110,7 +142,8 @@ for _, i in enumerate(bailam):
     df["Languages"].append(i[3])
     df["Mathematics"].append(i[4])
     df["Problems solving"].append(i[5])
-    df["Total"].append(i[3] + i[4] + i[5])
+    # df["Total"].append(i[3] + i[4] + i[5])
+    df["Total"].append(i[3] + i[4])
 
 st.table(pd.DataFrame(df))
 IDs = df["ID"]
@@ -172,7 +205,11 @@ def get_answer_sheet(bailam, IDs, id, figname = None):
     begin_y = 30
     num = 1
     for bailam, dapan in zip(student[2], dapan_vector[0, :]):
-        if (bailam == dapan):
+        if (begin_x >= 15):
+            truot('E', 'E', begin_x, begin_y)
+            plt.text(begin_x-1, begin_y-0.3, str(num), horizontalalignment = 'right', color = 'red', fontfamily = 'monospace')
+            num += 1
+        elif (bailam == dapan):
             trung(bailam, begin_x, begin_y)
             plt.text(begin_x-1, begin_y-0.3, str(num), horizontalalignment = 'right', fontfamily = 'monospace')
             num += 1
@@ -203,6 +240,11 @@ def get_answer_sheet(bailam, IDs, id, figname = None):
     return fig
     
 st.pyplot(get_answer_sheet(bailam, IDs, view))
+# id1, subid1, ans1, thresh = get_informations(f'{path}/{bailam[IDs.index(view)][0]}.jpg', require_thresh=True)
+fig, ax = plt.subplots(1, 1, figsize = (10, 12))
+ax.imshow(thresh[IDs.index(view)], cmap ='gray')
+ax.axis('off')
+st.pyplot(fig)
 
 def send_email(subject, body, sender, recipients, password, id):
     msg = MIMEMultipart()
