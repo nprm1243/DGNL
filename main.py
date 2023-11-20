@@ -26,7 +26,7 @@ PASSW = os.getenv('PASSW')
 
 # print("Choose folder:")
 # path = askdirectory()
-path = 'D:/code/.contest/dgnl/testscan'
+path = './testscan'
 files = os.listdir(path)
 # dapan = f"{path}/_dapan.png"
 
