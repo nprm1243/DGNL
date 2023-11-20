@@ -15,12 +15,12 @@ def get_informations(image_path, require_thresh = False):
     # print(image_path)
     origin_image = cv2.imread(image_path)
     image = 255 - origin_image[ :, :, 1]
-    rectangle = 255 - cv2.imread('D:/code/.contest/dgnl/assets/test.png', 0)
+    rectangle = 255 - cv2.imread('./assets/test.png', 0)
     small_rect = rectangle.copy()
     rectangle = cv2.resize(rectangle, (50, 50))
     # rectangle = np.full((25, 25), 255, dtype='int')
     # cv2.imwrite("rectangle.png", rectangle)
-    circle = cv2.imread('D:/code/.contest/dgnl/assets/choice.png', 0)
+    circle = cv2.imread('./assets/choice.png', 0)
     h, w = rectangle.shape
 
     origin_image_ = origin_image.copy()
